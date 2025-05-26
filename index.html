@@ -203,7 +203,7 @@
                     </div>
                     
                     <div class="slider-container">
-                        <label for="perceptionRadius">Perception Radius: <span id="perceptionRadius">50</span></label>
+                        <label for="perceptionRadius">Perception Radius: <span id="perceptionRadiusValue">50</span></label>
                         <input type="range" id="perceptionRadius" min="0" max="500" step="1" value="50" oninput="updatePerception(this.value)">
                     </div>
                     
@@ -757,7 +757,7 @@
         }
         
         function updatePerception(value) {
-            document.getElementById('perceptionRadius').textContent = value;
+            document.getElementById('perceptionRadiusValue').textContent = value;
             perceptionRadius = parseFloat(value);
             for (let boid of  boids) {
 				boid.perceptionRadius = perceptionRadius};
@@ -878,9 +878,11 @@
 			document.getElementById('alignmentForce').value = p.alignment;
 			document.getElementById('cohesionForce').value = p.cohesion;
 			document.getElementById('separationForce').value = p.separation;
+			document.getElementById('perceptionRadius').value = p.perceptionRadius;
 			updateAlignment(p.alignment);
 			updateCohesion(p.cohesion);
 			updateSeparation(p.separation);
+			updatePerception(p.perceptionRadius);
 
 			// Set wind type
 			setWindType(p.wind);
