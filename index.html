@@ -116,6 +116,12 @@
             box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
         }
 
+	.button.active {
+	    background: #4a9eff;
+	    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+	    transform: translateY(-1px);
+	}
+
         .metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -236,9 +242,9 @@
 
                 <div class="control-group">
                     <h3>Wind Effects</h3>
-                    <button class="button" onclick="setWindType('none')">No Wind</button>
-                    <button class="button" onclick="setWindType('uniform')">Uniform</button>
-                    <button class="button" onclick="setWindType('vortex')">Vortex</button>
+                    <button class="button active" id="windNone" onclick="setWindType('none')">No Wind</button>
+                    <button class="button" id="windUniform" onclick="setWindType('uniform')">Uniform</button>
+                    <button class="button" id="windVortex" onclick="setWindType('vortex')">Vortex</button>
                 </div>
                 
                 <div class="control-group">
@@ -765,6 +771,20 @@
 
         function setWindType(type) {
             windType = type;
+		    
+	    // Remove active class from all wind buttons
+	    document.getElementById('windNone').classList.remove('active');
+	    document.getElementById('windUniform').classList.remove('active');
+	    document.getElementById('windVortex').classList.remove('active');
+	    
+	    // Add active class to selected button
+	    if (type === 'none') {
+	        document.getElementById('windNone').classList.add('active');
+	    } else if (type === 'uniform') {
+	        document.getElementById('windUniform').classList.add('active');
+	    } else if (type === 'vortex') {
+	        document.getElementById('windVortex').classList.add('active');
+	    }
         }
 
         function calculateMetrics() {
