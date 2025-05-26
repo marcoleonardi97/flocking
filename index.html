@@ -803,8 +803,9 @@
             for (let boid of boids) {
                 totalDistance += Math.sqrt((boid.position.x - centerX) ** 2 + (boid.position.y - centerY) ** 2);
             }
-            
-            let cohesion =  1.0 / (totalDistance / boids.length + 1);
+
+	    // i put +0.5 instead of +1 temporarily cause cohesion tracker is too low
+            let cohesion =  1.0 / (totalDistance / boids.length + 0.5);
 
             // Average neighbors
             let totalNeighbors = 0;
