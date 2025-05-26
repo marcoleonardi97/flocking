@@ -1,3 +1,6 @@
 # Flocking
 Interactive simulation of active matter and animal behaviour 
-<a href="simulation.html" title="Simulation">Simulation</a>
+
+Click here to run the simulation](https://marcoleonardi97.github.io/flocking/)
+
+
