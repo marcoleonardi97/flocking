@@ -115,13 +115,13 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
         }
-
-	.button.active {
-	    background: #4a9eff;
-	    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
-	    transform: translateY(-1px);
-	}
-
+        
+        .button.active {
+            background: #4a9eff;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        
         .metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -210,7 +210,13 @@
                     
                     <div class="slider-container">
                         <label for="perceptionRadius">Perception Radius: <span id="perceptionRadiusValue">50</span></label>
-                        <input type="range" id="perceptionRadius" min="0" max="500" step="1" value="50" oninput="updatePerception(this.value)">
+                        <input type="range" id="perceptionRadius" min="0" max="200" value="50" oninput="updatePerception(this.value)">
+                    </div>
+                    
+                    <div class= "slider-container">
+						<label for="freeWill">Free Will: <span id="freeWillValue">0</span></label>
+						<input type="range" id="freeWill" min="0" max="1" step="0.1" value="0" oninput="updateFreeWill(this.value)"
+                    
                     </div>
                     
                 </div>
@@ -228,7 +234,7 @@
                     <h3>Visual Options</h3>
                     <div class="checkbox-container">
                         <input type="checkbox" id="showTrails" onchange="toggleTrails()">
-                        <label for="showTrails">Show Trails (WIP)</label>
+                        <label for="showTrails">Show Trails</label>
                     </div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="showVelocity" onchange="toggleVelocity()">
@@ -280,6 +286,7 @@
                 <div class="info-text">Average nearby boids</div>
             </div>
         </div>
+	
     </div>
 
     <script>
@@ -346,7 +353,12 @@
                 this.perceptionRadius = 50;
                 this.trail = [];
                 this.trailLength = 20;
+                this.freeWill = 0;
+                this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
+                this.frame=0;
+                this.bodyType = "default"
             }
+            
 
             align(boids) {
                 let steering = new Vector2(0, 0);
@@ -367,7 +379,7 @@
                     steering = steering.limit(this.maxForce * alignmentStrength);
                 }
 
-                return steering;
+                return steering.mul(1-this.freeWill);
             }
 
             cohesion(boids) {
@@ -390,7 +402,7 @@
                     steering = steering.limit(this.maxForce * cohesionStrength);
                 }
 
-                return steering;
+                return steering.mul(1-this.freeWill);
             }
 
             separation(boids) {
@@ -414,6 +426,29 @@
                     steering = steering.sub(this.velocity);
                     steering = steering.limit(this.maxForce * separationStrength);
                 }
+
+                return steering.mul(1-this.freeWill);
+            }
+            
+            equilibriumParameter(boids) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.position.distance(other.position);
+                    if (other !== this && d < this.perceptionRadius) {
+                        steering = steering.add(other.velocity.normalize());
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.magnitude();
+                    steering /= total;
+
+                } else {
+					steering = 0;
+					}
 
                 return steering;
             }
@@ -520,6 +555,11 @@
                 this.acceleration = this.acceleration.add(separation);
                 this.acceleration = this.acceleration.add(avoidance);
                 this.acceleration = this.acceleration.add(wind);
+                
+                if (this.frame % 10 == 0) {
+					this.acceleration = this.acceleration.add(this.freeChange.mul(this.freeWill))};
+					
+                this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
 
                 this.velocity = this.velocity.add(this.acceleration);
                 this.velocity = this.velocity.limit(this.maxSpeed);
@@ -536,21 +576,31 @@
                     this.trail.push(new Vector2(this.position.x, this.position.y));
                     if (this.trail.length > this.trailLength) {
                         this.trail.shift();
+                        
                     }
                 }
             }
 
             draw(ctx, showVel, showPerc) {
+				
                 // Draw trail
                 if (showTrails && this.trail.length > 1) {
                     ctx.strokeStyle = 'rgba(100, 181, 246, 0.3)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    
                     for (let i = 1; i < this.trail.length; i++) {
-                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
-                    }
-                    ctx.stroke();
+						let dx = Math.abs(this.trail[i].x - this.trail[i - 1].x);
+						let dy = Math.abs(this.trail[i].y - this.trail[i - 1].y);
+						if (dx < canvas.width / 2 && dy < canvas.height / 2) {
+							ctx.lineTo(this.trail[i].x, this.trail[i].y);
+						} else {
+							ctx.moveTo(this.trail[i].x, this.trail[i].y); // skip wrap jump for PBC
+						}
+						
+					ctx.stroke();
+					
+					}
                 }
 
                 // Draw perception radius
@@ -563,22 +613,29 @@
                 }
 
                 // Draw boid body
-                ctx.save();
-                ctx.translate(this.position.x, this.position.y);
-                ctx.rotate(Math.atan2(this.velocity.y, this.velocity.x));
                 
-                ctx.fillStyle = '#64b5f6';
-                ctx.beginPath();
-                ctx.moveTo(8, 0);
-                ctx.lineTo(-8, -4);
-                ctx.lineTo(-4, 0);
-                ctx.lineTo(-8, 4);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 1;
-                ctx.stroke();
+                ctx.save();
+				ctx.translate(this.position.x, this.position.y);
+				ctx.rotate(Math.atan2(this.velocity.y, this.velocity.x));
+				
+				if (this.bodyType=="default") {
+					ctx.fillStyle = '#64b5f6';
+					ctx.beginPath();
+					ctx.moveTo(8, 0);
+					ctx.lineTo(-8, -4);
+					ctx.lineTo(-4, 0);
+					ctx.lineTo(-8, 4);
+					ctx.closePath();
+					ctx.fill();
+					ctx.strokeStyle = '#ffffff';
+					ctx.lineWidth = 1;
+					ctx.stroke();		
+			    } else {
+					ctx.font = '16px serif';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.fillText(this.bodyType, 0, 0);  
+				}
                 
                 ctx.restore();
 
@@ -692,6 +749,7 @@
         let alignmentStrength = 1.0;
         let cohesionStrength = 1.0;
         let separationStrength = 1.0;
+        let freeWill = 0;
 
         // Initialize simulation
         function initializeBoids(count) {
@@ -768,23 +826,31 @@
             for (let boid of  boids) {
 				boid.perceptionRadius = perceptionRadius};
         }
+        
+        function updateFreeWill(value){
+			document.getElementById("freeWillValue").textContent=value;
+			//document.getElementById('freeWill').value = value;
+			freeWill = parseFloat(value);
+			for (let boid of boids){
+				boid.freeWill = freeWill};
+			}
 
         function setWindType(type) {
             windType = type;
-		    
-	    // Remove active class from all wind buttons
-	    document.getElementById('windNone').classList.remove('active');
-	    document.getElementById('windUniform').classList.remove('active');
-	    document.getElementById('windVortex').classList.remove('active');
-	    
-	    // Add active class to selected button
-	    if (type === 'none') {
-	        document.getElementById('windNone').classList.add('active');
-	    } else if (type === 'uniform') {
-	        document.getElementById('windUniform').classList.add('active');
-	    } else if (type === 'vortex') {
-	        document.getElementById('windVortex').classList.add('active');
-	    }
+            
+            // Remove active class from all wind buttons
+			document.getElementById('windNone').classList.remove('active');
+			document.getElementById('windUniform').classList.remove('active');
+			document.getElementById('windVortex').classList.remove('active');
+			
+			// Add active class to selected button
+			if (type === 'none') {
+				document.getElementById('windNone').classList.add('active');
+			} else if (type === 'uniform') {
+				document.getElementById('windUniform').classList.add('active');
+			} else if (type === 'vortex') {
+				document.getElementById('windVortex').classList.add('active');
+			}
         }
 
         function calculateMetrics() {
@@ -811,21 +877,14 @@
             alignment = count > 0 ? alignment / count : 0;
 
             // Cohesion (inverse of average distance from center of mass)
-            let centerX = 0, centerY = 0;
+           
+            let psi = 0;
+           
             for (let boid of boids) {
-                centerX += boid.position.x;
-                centerY += boid.position.y;
+                psi += boid.equilibriumParameter(boids);
             }
-            centerX /= boids.length;
-            centerY /= boids.length;
+            let cohesion = psi / boids.length;
 
-            let totalDistance = 0;
-            for (let boid of boids) {
-                totalDistance += Math.sqrt((boid.position.x - centerX) ** 2 + (boid.position.y - centerY) ** 2);
-            }
-
-	    // i put +0.5 instead of +1 temporarily cause cohesion tracker is too low
-            let cohesion =  1.0 / (totalDistance / boids.length + 0.5);
 
             // Average neighbors
             let totalNeighbors = 0;
@@ -855,7 +914,8 @@
 					separation: 0.03,
 					perceptionRadius: 70,
 					maxSpeed: 2.8,
-					wind: 'vortex'
+					wind: 'vortex',
+					bodyType: "🐟"
 				},
 				birds: {
 					alignment: 0.03,
@@ -863,7 +923,8 @@
 					separation: 0.036,
 					perceptionRadius: 80,
 					maxSpeed: 2.5,
-					wind: 'vortex'
+					wind: 'vortex',
+					bodyType: "🕊️"
 				},
 				herd: {
 					alignment: 0.016,
@@ -871,7 +932,8 @@
 					separation: 0.015,
 					perceptionRadius: 90,
 					maxSpeed: 1.8,
-					wind: 'none'
+					wind: 'none',
+					bodyType: "🦌"
 				},
 				insects: {
 					alignment: 0.006,
@@ -879,7 +941,8 @@
 					separation: 0.009,
 					perceptionRadius: 40,
 					maxSpeed: 2.0,
-					wind: 'none'
+					wind: 'none',
+					bodyType: "🐝"
 				},
 				migrating: {
 					alignment: 0.03,
@@ -887,7 +950,8 @@
 					separation: 0.045,
 					perceptionRadius: 100,
 					maxSpeed: 2.5,
-					wind: 'uniform'
+					wind: 'uniform',
+					bodyType: "🦆"
 				}
 			};
 
@@ -910,6 +974,7 @@
 			// Set boid-specific properties
 			for (let boid of boids) {
 				boid.perceptionRadius = p.perceptionRadius;
+				boid.bodyType = p.bodyType;
 				boid.maxSpeed = p.maxSpeed;
 			}
 		}
@@ -975,6 +1040,7 @@
                 for (let boid of boids) {
                     boid.update(boids, predators);
                     boid.draw(ctx, showVelocityVectors, showPerceptionRadius);
+                    boid.frame = boid.frame +1;
                 }
 
                 // Update and draw predators
@@ -991,11 +1057,14 @@
 
             requestAnimationFrame(animate);
         }
+		
+
 
         // Initialize and start simulation
         setTheme('midnight'); //default
         initializeBoids(50);
         animate();
+
     </script>
 </body>
 </html>
