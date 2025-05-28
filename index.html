@@ -213,6 +213,11 @@
                         <input type="range" id="perceptionRadius" min="0" max="200" value="50" oninput="updatePerception(this.value)">
                     </div>
                     
+                    <div class="slider-container">
+                        <label for="fieldOfView">Field of View (rad): <span id="fovValue">2.35</span></label>
+                        <input type="range" id="fieldOfView" min="0.1" max="6.28" step="0.05" value="2.35" oninput="updateFov(this.value)">
+                    </div>
+                    
                     <div class= "slider-container">
 						<label for="freeWill">Free Will: <span id="freeWillValue">0</span></label>
 						<input type="range" id="freeWill" min="0" max="1" step="0.1" value="0" oninput="updateFreeWill(this.value)"
@@ -353,6 +358,7 @@
                 this.perceptionRadius = 50;
                 this.trail = [];
                 this.trailLength = 20;
+                this.perceptionFOV = 0.75 * Math.PI;
                 this.freeWill = 0;
                 this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
                 this.frame=0;
@@ -366,7 +372,7 @@
 
                 for (let other of boids) {
                     let d = this.position.distance(other.position);
-                    if (other !== this && d < this.perceptionRadius) {
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
                         steering = steering.add(other.velocity);
                         total++;
                     }
@@ -388,7 +394,7 @@
 
                 for (let other of boids) {
                     let d = this.position.distance(other.position);
-                    if (other !== this && d < this.perceptionRadius) {
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
                         steering = steering.add(other.position);
                         total++;
                     }
@@ -411,7 +417,7 @@
 
                 for (let other of boids) {
                     let d = this.position.distance(other.position);
-                    if (other !== this && d < this.perceptionRadius * 0.5) {
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius * 0.5) {
                         let diff = this.position.sub(other.position);
                         diff = diff.normalize();
                         diff = diff.div(d); // Weight by distance
@@ -436,7 +442,7 @@
 
                 for (let other of boids) {
                     let d = this.position.distance(other.position);
-                    if (other !== this && d < this.perceptionRadius) {
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
                         steering = steering.add(other.velocity.normalize());
                         total++;
                     }
@@ -540,6 +546,18 @@
 					ctx.restore();
 				}
 			}
+			
+			inFieldOfView(other) {
+				const offset = other.position.sub(this.position);
+				const distance = offset.magnitude();
+				if (distance > this.perceptionRadius) return false;
+
+				const forward = this.velocity.normalize();
+				const direction = offset.normalize();
+				const angle = Math.acos(forward.dot(direction));
+				
+				return angle < this.perceptionFOV / 2;
+				}
 
             update(boids, predators) {
                 this.acceleration = new Vector2(0, 0);
@@ -556,7 +574,7 @@
                 this.acceleration = this.acceleration.add(avoidance);
                 this.acceleration = this.acceleration.add(wind);
                 
-                if (this.frame % 10 == 0) {
+                if (this.frame % 60 == 0) {
 					this.acceleration = this.acceleration.add(this.freeChange.mul(this.freeWill))};
 					
                 this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
@@ -603,20 +621,30 @@
 					}
                 }
 
-                // Draw perception radius
-                if (showPerc) {
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.arc(this.position.x, this.position.y, this.perceptionRadius, 0, 2 * Math.PI);
-                    ctx.stroke();
-                }
+
 
                 // Draw boid body
                 
                 ctx.save();
 				ctx.translate(this.position.x, this.position.y);
 				ctx.rotate(Math.atan2(this.velocity.y, this.velocity.x));
+				
+				// Draw perception radius
+                if (showPerc) {
+					ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.arc(
+						0,
+						0,
+						this.perceptionRadius,
+						-this.perceptionFOV / 2,
+						this.perceptionFOV / 2
+					);
+					ctx.closePath();
+					ctx.stroke();
+				}
 				
 				if (this.bodyType=="default") {
 					ctx.fillStyle = '#64b5f6';
@@ -750,6 +778,7 @@
         let cohesionStrength = 1.0;
         let separationStrength = 1.0;
         let freeWill = 0;
+        //let perceptionFOV = Math.PI * 0.75; // 135° cone
 
         // Initialize simulation
         function initializeBoids(count) {
@@ -826,6 +855,13 @@
             for (let boid of  boids) {
 				boid.perceptionRadius = perceptionRadius};
         }
+        
+        function updateFov(value){
+			document.getElementById('fovValue').textContent = value;
+			fov = parseFloat(value);
+			for (let boid of boids){
+				boid.perceptionFOV = fov};
+			}
         
         function updateFreeWill(value){
 			document.getElementById("freeWillValue").textContent=value;
@@ -915,6 +951,7 @@
 					perceptionRadius: 70,
 					maxSpeed: 2.8,
 					wind: 'vortex',
+					fov: 6,
 					bodyType: "🐟"
 				},
 				birds: {
@@ -924,6 +961,7 @@
 					perceptionRadius: 80,
 					maxSpeed: 2.5,
 					wind: 'vortex',
+					fov: 5.5,
 					bodyType: "🕊️"
 				},
 				herd: {
@@ -933,6 +971,7 @@
 					perceptionRadius: 90,
 					maxSpeed: 1.8,
 					wind: 'none',
+					fov: 4.4,
 					bodyType: "🦌"
 				},
 				insects: {
@@ -942,6 +981,7 @@
 					perceptionRadius: 40,
 					maxSpeed: 2.0,
 					wind: 'none',
+					fov: 6,
 					bodyType: "🐝"
 				},
 				migrating: {
@@ -951,6 +991,7 @@
 					perceptionRadius: 100,
 					maxSpeed: 2.5,
 					wind: 'uniform',
+					fov: 4.9,
 					bodyType: "🦆"
 				}
 			};
@@ -963,10 +1004,12 @@
 			document.getElementById('cohesionForce').value = p.cohesion;
 			document.getElementById('separationForce').value = p.separation;
 			document.getElementById('perceptionRadius').value = p.perceptionRadius;
+			document.getElementById('fieldOfView').value = p.fov;
 			updateAlignment(p.alignment);
 			updateCohesion(p.cohesion);
 			updateSeparation(p.separation);
 			updatePerception(p.perceptionRadius);
+			updateFov(p.fov);
 
 			// Set wind type
 			setWindType(p.wind);
@@ -976,6 +1019,7 @@
 				boid.perceptionRadius = p.perceptionRadius;
 				boid.bodyType = p.bodyType;
 				boid.maxSpeed = p.maxSpeed;
+				boid.perceptionFOV = p.fov;
 			}
 		}
 		
