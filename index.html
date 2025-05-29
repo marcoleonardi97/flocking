@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐦</text></svg>">
+    <title>Boid Flocking Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: f4f4f4;
+            font-family: 'Arial', sans-serif;
+            color: #222;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .simulation-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: #eaeaea;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #0f2027;
+            font-size: 1.1em;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #e0e0e0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1a1a3a;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .button {
+            background: #1a1a3a;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1); 
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+        }
+        
+        .button.active {
+            background: #4a9eff;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .metric-card h4 {
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            font-size: 1em;
+        }
+
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .info-text {
+            font-size: 0.8em;
+            color: #ffffff;
+            margin-top: 5px;
+        }
+        
+		.obstacle-panel {
+			background: rgba(0, 0, 0, 0.3);
+			border-radius: 15px;
+			padding: 15px;
+			backdrop-filter: blur(10px);
+			box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+			margin-bottom: 20px;
+			text-align: center;
+		}
+
+		.obstacle-panel h3 {
+			margin: 0 0 15px 0;
+			color: #ffffff;
+			font-size: 1.2em;
+		}
+
+		.obstacle-controls {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 15px;
+			flex-wrap: wrap;
+			margin-bottom: 15px;
+		}
+
+		.obstacle-controls button {
+			padding: 10px 20px;
+			font-size: 0.9em;
+			white-space: nowrap;
+		}
+
+		.obstacle-checkbox {
+			display: flex;
+			align-items: center;
+			color: #e0e0e0;
+			font-size: 0.9em;
+			cursor: pointer;
+		}
+
+		.obstacle-checkbox input {
+			margin-right: 8px;
+			transform: scale(1.2);
+		}
+
+		.obstacle-panel .info-text {
+			color: #cccccc;
+			font-size: 0.85em;
+			margin: 0;
+			font-style: italic;
+		}
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulating Active Matter:</h1>
+        <h2> A flocking simulation by Marco Leonardi and Rudi Van Velzen</h2> 
+        
+			<div class="simulation-container">
+				<div class="canvas-container">
+					<canvas id="canvas" width="800" height="600"></canvas>
+					
+				<div class="obstacle-panel">
+					<h3>Obstacle Controls</h3>
+					<div class="obstacle-controls">
+						<button class="button" onclick="addObstacle()">Add Random Obstacle</button>
+						<button class="button" onclick="clearObstacles()">Clear All Obstacles</button>
+						<button class="button" onclick="addWalls()">Add Wall Pattern</button>
+					</div>
+					<div class="info-text">💡 Click anywhere on the canvas to place an obstacle, or click existing obstacles to remove them</div>
+				</div>
+			</div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Simulation Controls</h3>
+                    <button class="button" onclick="resetSimulation()">Reset</button>
+                    <button class="button" onclick="togglePause()" id="pauseBtn">Pause</button>
+                    <button class="button" onclick="addPredator()">Add Predator</button>
+                    <button class="button" onclick="removePredator()">Remove Predator</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Flock Parameters</h3>
+                    <div class="slider-container">
+                        <label for="boidCount">Boids: <span id="boidCountValue">50</span></label>
+                        <input type="range" id="boidCount" min="10" max="200" value="50" oninput="updateBoidCount(this.value)">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="alignmentForce">Alignment: <span id="alignmentValue">0.02</span></label>
+                        <input type="range" id="alignmentForce" min="0" max="0.1" step="0.005" value="0.02" oninput="updateAlignment(this.value)">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="cohesionForce">Cohesion: <span id="cohesionValue">0.02</span></label>
+                        <input type="range" id="cohesionForce" min="0" max="0.1" step="0.005" value="0.02" oninput="updateCohesion(this.value)">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="separationForce">Separation: <span id="separationValue">0.03</span></label>
+                        <input type="range" id="separationForce" min="0" max="0.1" step="0.005" value="0.03" oninput="updateSeparation(this.value)">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="perceptionRadius">Perception Radius: <span id="perceptionRadiusValue">50</span></label>
+                        <input type="range" id="perceptionRadius" min="0" max="200" value="50" oninput="updatePerception(this.value)">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="fieldOfView">Field of View (rad): <span id="fovValue">2.35</span></label>
+                        <input type="range" id="fieldOfView" min="0.1" max="6.28" step="0.05" value="2.35" oninput="updateFov(this.value)">
+                    </div>
+                    
+                    <div class= "slider-container">
+						<label for="freeWill">Free Will: <span id="freeWillValue">0</span></label>
+						<input type="range" id="freeWill" min="0" max="1" step="0.1" value="0" oninput="updateFreeWill(this.value)"
+                    
+                    </div>
+                    
+                </div>
+                
+                <div class="control-group">
+					<h3>Preset Behaviors</h3>
+					<button class="button" onclick="setPreset('fish')">🐟 Fish</button>
+					<button class="button" onclick="setPreset('birds')">🕊️ Birds</button>
+					<button class="button" onclick="setPreset('herd')">🦌 Herd</button>
+					<button class="button" onclick="setPreset('insects')">🐝 Insects</button>
+					<button class="button" onclick="setPreset('migrating')">🦆 Migrating Birds</button>
+				</div>
+
+                <div class="control-group">
+                    <h3>Visual Options</h3>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="showTrails" onchange="toggleTrails()">
+                        <label for="showTrails">Show Trails</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="showVelocity" onchange="toggleVelocity()">
+                        <label for="showVelocity">Show Velocity Vectors</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="showPerception" onchange="togglePerception()">
+                        <label for="showPerception">Show Perception Radius</label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Wind Effects</h3>
+                    <button class="button active" id="windNone" onclick="setWindType('none')">No Wind</button>
+                    <button class="button" id="windUniform" onclick="setWindType('uniform')">Uniform</button>
+                    <button class="button" id="windVortex" onclick="setWindType('vortex')">Vortex</button>
+                </div>
+                
+                <div class="control-group">
+					<h3>Visual Theme</h3>
+					<select id="themeSelect" onchange="setTheme(this.value)" class="button">
+						<option value="midnight">Midnight</option>
+						<option value="monochrome">Monochrome</option>
+					</select>
+				</div>
+
+            </div>
+        </div>
+
+        <div class="metrics">
+            <div class="metric-card">
+                <h4>Average Speed</h4>
+                <div class="metric-value" id="avgSpeed">0.00</div>
+                <div class="info-text">Current flock velocity</div>
+            </div>
+            <div class="metric-card">
+                <h4>Alignment</h4>
+                <div class="metric-value" id="alignment">0.00</div>
+                <div class="info-text">Direction coherence</div>
+            </div>
+            <div class="metric-card">
+                <h4>Cohesion</h4>
+                <div class="metric-value" id="cohesion">0.00</div>
+                <div class="info-text">Group compactness</div>
+            </div>
+            <div class="metric-card">
+                <h4>Neighbors</h4>
+                <div class="metric-value" id="avgNeighbors">0.00</div>
+                <div class="info-text">Average nearby boids</div>
+            </div>
+        </div>
+	
+    </div>
+
+    <script>
+        class Vector2 {
+            constructor(x = 0, y = 0) {
+                this.x = x;
+                this.y = y;
+            }
+
+            add(v) {
+                return new Vector2(this.x + v.x, this.y + v.y);
+            }
+
+            sub(v) {
+                return new Vector2(this.x - v.x, this.y - v.y);
+            }
+
+            mul(scalar) {
+                return new Vector2(this.x * scalar, this.y * scalar);
+            }
+
+            div(scalar) {
+                return new Vector2(this.x / scalar, this.y / scalar);
+            }
+
+            magnitude() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+
+            normalize() {
+                const mag = this.magnitude();
+                if (mag > 0) {
+                    return this.div(mag);
+                }
+                return new Vector2(0, 0);
+            }
+
+            limit(max) {
+                if (this.magnitude() > max) {
+                    return this.normalize().mul(max);
+                }
+                return new Vector2(this.x, this.y);
+            }
+
+            dot(v) {
+                return this.x * v.x + this.y * v.y;
+            }
+
+            distance(v) {
+                return this.sub(v).magnitude();
+            }
+        }
+
+        class Boid {
+            constructor(x, y) {
+                this.position = new Vector2(x, y);
+                this.velocity = new Vector2(
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4
+                );
+                this.acceleration = new Vector2(0, 0);
+                this.maxSpeed = 2.5;
+                this.maxForce = 0.03;
+                this.perceptionRadius = 50;
+                this.trail = [];
+                this.trailLength = 20;
+                this.perceptionFOV = 0.75 * Math.PI;
+                this.freeWill = 0;
+                this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
+                this.frame=0;
+                this.bodyType = "default"
+            }
+            
+
+            align(boids) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.position.distance(other.position);
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
+                        steering = steering.add(other.velocity);
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.div(total);
+                    steering = steering.normalize().mul(this.maxSpeed);
+                    steering = steering.sub(this.velocity);
+                    steering = steering.limit(this.maxForce * alignmentStrength);
+                }
+
+                return steering.mul(1-this.freeWill);
+            }
+
+            cohesion(boids) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.position.distance(other.position);
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
+                        steering = steering.add(other.position);
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.div(total);
+                    steering = steering.sub(this.position);
+                    steering = steering.normalize().mul(this.maxSpeed);
+                    steering = steering.sub(this.velocity);
+                    steering = steering.limit(this.maxForce * cohesionStrength);
+                }
+
+                return steering.mul(1-this.freeWill);
+            }
+
+            separation(boids) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.position.distance(other.position);
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius * 0.5) {
+                        let diff = this.position.sub(other.position);
+                        diff = diff.normalize();
+                        diff = diff.div(d); // Weight by distance
+                        steering = steering.add(diff);
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.div(total);
+                    steering = steering.normalize().mul(this.maxSpeed);
+                    steering = steering.sub(this.velocity);
+                    steering = steering.limit(this.maxForce * separationStrength);
+                }
+
+                return steering.mul(1-this.freeWill);
+            }
+            
+            equilibriumParameter(boids) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let other of boids) {
+                    let d = this.position.distance(other.position);
+                    if (other !== this && this.inFieldOfView(other) && d < this.perceptionRadius) {
+                        steering = steering.add(other.velocity.normalize());
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.magnitude();
+                    steering /= total;
+
+                } else {
+					steering = 0;
+					}
+
+                return steering;
+            }
+
+            avoidPredators(predators) {
+                let steering = new Vector2(0, 0);
+                let total = 0;
+
+                for (let predator of predators) {
+                    let d = this.position.distance(predator.position);
+                    if (d < 80) {
+                        let diff = this.position.sub(predator.position);
+                        diff = diff.normalize();
+                        diff = diff.div(d * d); // Stronger avoidance when closer
+                        steering = steering.add(diff);
+                        total++;
+                    }
+                }
+
+                if (total > 0) {
+                    steering = steering.div(total);
+                    steering = steering.normalize().mul(this.maxSpeed * 1.5);
+                    steering = steering.sub(this.velocity);
+                    steering = steering.limit(this.maxForce * 3);
+                }
+
+                return steering;
+            }
+            
+            avoidObstacles(obstacles) {
+				let steering = new Vector2(0, 0);
+				let total = 0;
+				const avoidanceRadius = this.perceptionRadius; // Distance to start avoiding
+
+				for (let obstacle of obstacles) {
+					let d = this.position.distance(obstacle.position);
+					let combinedRadius = obstacle.radius + avoidanceRadius;
+					
+					if (d < combinedRadius) {
+						let diff = this.position.sub(obstacle.position);
+						diff = diff.normalize();
+						
+						// Stronger avoidance when closer
+						let strength = (combinedRadius - d) / combinedRadius;
+						diff = diff.mul(strength * strength);
+						steering = steering.add(diff);
+						total++;
+					}
+				}
+
+				if (total > 0) {
+					steering = steering.div(total);
+					steering = steering.normalize().mul(this.maxSpeed * 1.2);
+					steering = steering.sub(this.velocity);
+					steering = steering.limit(this.maxForce * 2);
+				}
+
+				return steering;
+			}
+            
+            
+			applyWind() {
+				if (windType === 'uniform') {
+					// Draw uniform wind particles
+					if (Math.random() < 0.3) {
+						this.drawWindParticles('uniform');
+					}
+					return new Vector2(0.05, 0);
+				} else if (windType === 'vortex') {
+					// Draw vortex wind particles
+					if (Math.random() < 0.2) {
+						this.drawWindParticles('vortex');
+					}
+					let center = new Vector2(canvas.width / 2, canvas.height / 2);
+					let offset = this.position.sub(center);
+					let distance = offset.magnitude();
+					if (distance < 1) return new Vector2(0, 0);
+					let perpendicular = new Vector2(-offset.y, offset.x);
+					return perpendicular.normalize().mul(0.02);
+				}
+				return new Vector2(0, 0);
+			}
+			
+			drawWindParticles(type) {
+				if (type === 'uniform') {
+					// Draw horizontal wind streaks
+					ctx.save();
+					ctx.globalAlpha = 0.7;
+					ctx.strokeStyle = '#87CEEB';
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					
+					let startX = this.position.x - 20 + Math.random() * 40;
+					let startY = this.position.y - 10 + Math.random() * 20;
+					ctx.moveTo(startX, startY);
+					ctx.lineTo(startX + 15, startY);
+					ctx.stroke();
+					ctx.restore();
+				} else if (type === 'vortex') {
+					// Draw circular wind particles around center
+					ctx.save();
+					ctx.globalAlpha = 0.7;
+					ctx.strokeStyle = '#98FB98';
+					ctx.lineWidth = 1;
+					
+					let center = new Vector2(canvas.width / 2, canvas.height / 2);
+					let offset = this.position.sub(center);
+					let distance = offset.magnitude();
+					
+					if (distance > 10 && distance < 200) {
+						let angle = Math.atan2(offset.y, offset.x);
+						let particleX = this.position.x + Math.cos(angle + Math.PI/2) * 8;
+						let particleY = this.position.y + Math.sin(angle + Math.PI/2) * 8;
+						
+						ctx.beginPath();
+						ctx.arc(particleX, particleY, 1, 0, 2 * Math.PI);
+						ctx.fillStyle = '#98FB98';
+						ctx.fill();
+					}
+					ctx.restore();
+				}
+			}
+			
+			inFieldOfView(other) {
+				const offset = other.position.sub(this.position);
+				const distance = offset.magnitude();
+				if (distance > this.perceptionRadius) return false;
+
+				const forward = this.velocity.normalize();
+				const direction = offset.normalize();
+				const angle = Math.acos(forward.dot(direction));
+				
+				return angle < this.perceptionFOV / 2;
+				}
+
+            update(boids, predators) {
+                this.acceleration = new Vector2(0, 0);
+
+                let alignment = this.align(boids);
+                let cohesion = this.cohesion(boids);
+                let separation = this.separation(boids);
+                let avoidance = this.avoidPredators(predators);
+                let wind = this.applyWind();
+                let obstacleAvoidance = this.avoidObstacles(obstacles);
+
+                this.acceleration = this.acceleration.add(alignment);
+                this.acceleration = this.acceleration.add(cohesion);
+                this.acceleration = this.acceleration.add(separation);
+                this.acceleration = this.acceleration.add(avoidance);
+                this.acceleration = this.acceleration.add(obstacleAvoidance);
+                this.acceleration = this.acceleration.add(wind);
+                
+                if (this.frame % 60 == 0) {
+					this.acceleration = this.acceleration.add(this.freeChange.mul(this.freeWill))};
+					
+                this.freeChange = new Vector2(4*Math.random()-2, 4*Math.random()-2);
+
+                this.velocity = this.velocity.add(this.acceleration);
+                this.velocity = this.velocity.limit(this.maxSpeed);
+                this.position = this.position.add(this.velocity);
+
+                // Wrap around edges
+                if (this.position.x < 0) this.position.x = canvas.width;
+                if (this.position.x > canvas.width) this.position.x = 0;
+                if (this.position.y < 0) this.position.y = canvas.height;
+                if (this.position.y > canvas.height) this.position.y = 0;
+
+                // Update trail
+                if (showTrails) {
+                    this.trail.push(new Vector2(this.position.x, this.position.y));
+                    if (this.trail.length > this.trailLength) {
+                        this.trail.shift();
+                        
+                    }
+                }
+            }
+
+            draw(ctx, showVel, showPerc) {
+				
+                // Draw trail
+                if (showTrails && this.trail.length > 1) {
+                    ctx.strokeStyle = 'rgba(100, 181, 246, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    
+                    for (let i = 1; i < this.trail.length; i++) {
+						let dx = Math.abs(this.trail[i].x - this.trail[i - 1].x);
+						let dy = Math.abs(this.trail[i].y - this.trail[i - 1].y);
+						if (dx < canvas.width / 2 && dy < canvas.height / 2) {
+							ctx.lineTo(this.trail[i].x, this.trail[i].y);
+						} else {
+							ctx.moveTo(this.trail[i].x, this.trail[i].y); // skip wrap jump for PBC
+						}
+						
+					ctx.stroke();
+					
+					}
+                }
+
+
+
+                // Draw boid body
+                
+                ctx.save();
+				ctx.translate(this.position.x, this.position.y);
+				ctx.rotate(Math.atan2(this.velocity.y, this.velocity.x));
+				
+				// Draw perception radius
+                if (showPerc) {
+					ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.arc(
+						0,
+						0,
+						this.perceptionRadius,
+						-this.perceptionFOV / 2,
+						this.perceptionFOV / 2
+					);
+					ctx.closePath();
+					ctx.stroke();
+				}
+				
+				if (this.bodyType=="default") {
+					ctx.fillStyle = '#64b5f6';
+					ctx.beginPath();
+					ctx.moveTo(8, 0);
+					ctx.lineTo(-8, -4);
+					ctx.lineTo(-4, 0);
+					ctx.lineTo(-8, 4);
+					ctx.closePath();
+					ctx.fill();
+					ctx.strokeStyle = '#ffffff';
+					ctx.lineWidth = 1;
+					ctx.stroke();		
+			    } else {
+					ctx.font = '16px serif';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.fillText(this.bodyType, 0, 0);  
+				}
+                
+                ctx.restore();
+
+                // Draw velocity vector
+                if (showVel) {
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.position.x, this.position.y);
+                    let end = this.position.add(this.velocity.mul(10));
+                    ctx.lineTo(end.x, end.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        class Predator {
+            constructor(x, y) {
+                this.position = new Vector2(x, y);
+                this.velocity = new Vector2(
+                    (Math.random() - 0.5) * 3,
+                    (Math.random() - 0.5) * 3
+                );
+                this.acceleration = new Vector2(0, 0);
+                this.maxSpeed = 3.5;
+                this.maxForce = 0.08;
+                this.perceptionRadius = 80;
+            }
+
+            chase(boids) {
+                let closestBoid = null;
+                let minDistance = Infinity;
+
+                for (let boid of boids) {
+                    let d = this.position.distance(boid.position);
+                    if (d < this.perceptionRadius && d < minDistance) {
+                        minDistance = d;
+                        closestBoid = boid;
+                    }
+                }
+
+                if (closestBoid) {
+                    let desired = closestBoid.position.sub(this.position);
+                    desired = desired.normalize().mul(this.maxSpeed);
+                    let steering = desired.sub(this.velocity);
+                    steering = steering.limit(this.maxForce);
+                    return steering;
+                }
+
+                return new Vector2(0, 0);
+            }
+
+            update(boids) {
+                this.acceleration = new Vector2(0, 0);
+                let chase = this.chase(boids);
+                this.acceleration = this.acceleration.add(chase);
+
+                this.velocity = this.velocity.add(this.acceleration);
+                this.velocity = this.velocity.limit(this.maxSpeed);
+                this.position = this.position.add(this.velocity);
+
+                // Wrap around edges
+                if (this.position.x < 0) this.position.x = canvas.width;
+                if (this.position.x > canvas.width) this.position.x = 0;
+                if (this.position.y < 0) this.position.y = canvas.height;
+                if (this.position.y > canvas.height) this.position.y = 0;
+            }
+
+            draw(ctx) {
+                // Draw predator body
+                ctx.save();
+                ctx.translate(this.position.x, this.position.y);
+                ctx.rotate(Math.atan2(this.velocity.y, this.velocity.x));
+                
+                ctx.fillStyle = '#f44336';
+                ctx.beginPath();
+                ctx.moveTo(12, 0);
+                ctx.lineTo(-12, -6);
+                ctx.lineTo(-6, 0);
+                ctx.lineTo(-12, 6);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.restore();
+
+                // Draw hunting radius
+                ctx.strokeStyle = 'rgba(244, 67, 54, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.position.x, this.position.y, this.perceptionRadius, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+        }
+        
+        class Obstacle {
+			constructor(x, y, radius = 30, color='rgba(102, 51, 153, 1)') {
+				this.position = new Vector2(x, y);
+				this.radius = radius;
+				this.type = 'circle'; // Can extend to different shapes later
+				this.color = color;
+			}
+
+			draw(ctx) {
+				if (!showObstacles) return;
+				
+				ctx.save();
+				ctx.fillStyle = this.color; 
+				ctx.strokeStyle = 'rgba(250, 250, 250, 1)';
+				ctx.lineWidth = 2;
+				
+				ctx.beginPath();
+				ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI);
+				ctx.fill();
+				ctx.stroke();
+				
+				// Add some texture lines
+				ctx.strokeStyle = 'rgba(101, 67, 33, 0.5)';
+				ctx.lineWidth = 1;
+				for (let i = 0; i < 3; i++) {
+					let angle = (Math.PI * 2 / 3) * i;
+					let startX = this.position.x + Math.cos(angle) * (this.radius * 0.3);
+					let startY = this.position.y + Math.sin(angle) * (this.radius * 0.3);
+					let endX = this.position.x + Math.cos(angle) * (this.radius * 0.7);
+					let endY = this.position.y + Math.sin(angle) * (this.radius * 0.7);
+					
+					ctx.beginPath();
+					ctx.moveTo(startX, startY);
+					ctx.lineTo(endX, endY);
+					ctx.stroke();
+				}
+				
+				ctx.restore();
+			}
+
+			contains(x, y) {
+				return this.position.distance(new Vector2(x, y)) <= this.radius;
+			}
+		}
+
+        // Simulation variables
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let boids = [];
+        let predators = [];
+        let isPaused = false;
+        let showTrails = false;
+        let showVelocityVectors = false;
+        let showPerceptionRadius = false;
+        let windType = 'none';
+
+        // Simulation parameters
+        let alignmentStrength = 1.0;
+        let cohesionStrength = 1.0;
+        let separationStrength = 1.0;
+        let freeWill = 0;
+        
+        // obstacles
+        let obstacles = [];
+		let showObstacles = true;
+		let isPlacingObstacle = false;
+        //let perceptionFOV = Math.PI * 0.75; // 135° cone
+
+        // Initialize simulation
+        function initializeBoids(count) {
+            boids = [];
+            for (let i = 0; i < count; i++) {
+                boids.push(new Boid(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+        }
+
+        function addPredator() {
+            predators.push(new Predator(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height
+            ));
+        }
+
+        function removePredator() {
+            if (predators.length > 0) {
+                predators.pop();
+            }
+        }
+
+        function resetSimulation() {
+            initializeBoids(parseInt(document.getElementById('boidCount').value));
+            predators = [];
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
+        }
+
+        function toggleTrails() {
+            showTrails = document.getElementById('showTrails').checked;
+            if (!showTrails) {
+                boids.forEach(boid => boid.trail = []);
+            }
+        }
+
+        function toggleVelocity() {
+            showVelocityVectors = document.getElementById('showVelocity').checked;
+        }
+
+        function togglePerception() {
+            showPerceptionRadius = document.getElementById('showPerception').checked;
+        }
+
+        function updateBoidCount(value) {
+            document.getElementById('boidCountValue').textContent = value;
+            initializeBoids(parseInt(value));
+        }
+
+        function updateAlignment(value) {
+            document.getElementById('alignmentValue').textContent = value;
+            alignmentStrength = parseFloat(value) / 0.02;
+        }
+
+        function updateCohesion(value) {
+            document.getElementById('cohesionValue').textContent = value;
+            cohesionStrength = parseFloat(value) / 0.02;
+        }
+
+        function updateSeparation(value) {
+            document.getElementById('separationValue').textContent = value;
+            separationStrength = parseFloat(value) / 0.03;
+        }
+        
+        function updatePerception(value) {
+            document.getElementById('perceptionRadiusValue').textContent = value;
+            perceptionRadius = parseFloat(value);
+            for (let boid of  boids) {
+				boid.perceptionRadius = perceptionRadius};
+        }
+        
+        function updateFov(value){
+			document.getElementById('fovValue').textContent = value;
+			fov = parseFloat(value);
+			for (let boid of boids){
+				boid.perceptionFOV = fov};
+			}
+        
+        function updateFreeWill(value){
+			document.getElementById("freeWillValue").textContent=value;
+			//document.getElementById('freeWill').value = value;
+			freeWill = parseFloat(value);
+			for (let boid of boids){
+				boid.freeWill = freeWill};
+			}
+
+        function setWindType(type) {
+            windType = type;
+            
+            // Remove active class from all wind buttons
+			document.getElementById('windNone').classList.remove('active');
+			document.getElementById('windUniform').classList.remove('active');
+			document.getElementById('windVortex').classList.remove('active');
+			
+			// Add active class to selected button
+			if (type === 'none') {
+				document.getElementById('windNone').classList.add('active');
+			} else if (type === 'uniform') {
+				document.getElementById('windUniform').classList.add('active');
+			} else if (type === 'vortex') {
+				document.getElementById('windVortex').classList.add('active');
+			}
+        }
+        function addObstacle() {
+			// Add random obstacle
+			obstacles.push(new Obstacle(
+				50 + Math.random() * (canvas.width - 100),
+				50 + Math.random() * (canvas.height - 100),
+				20 + Math.random() * 25
+			));
+		}
+
+		function clearObstacles() {
+			obstacles = [];
+		}
+		
+		function setObstaclesColor(rgbColor) {
+			obstaclesColor = rgbColor
+			for (let obs of obstacles) {
+				obs.color = rgbColor
+			}
+		}
+
+		function addWalls() {
+			clearObstacles();
+			// Add border walls
+			const wallThickness = 15;
+			obstacles.push(new Obstacle(wallThickness, canvas.height / 2, wallThickness)); // Left wall
+			obstacles.push(new Obstacle(canvas.width - wallThickness, canvas.height / 2, wallThickness)); // Right wall
+			obstacles.push(new Obstacle(canvas.width / 2, wallThickness, wallThickness)); // Top wall
+			obstacles.push(new Obstacle(canvas.width / 2, canvas.height - wallThickness, wallThickness)); // Bottom wall
+			
+			// Add some center obstacles
+			obstacles.push(new Obstacle(canvas.width * 0.3, canvas.height * 0.3, 25));
+			obstacles.push(new Obstacle(canvas.width * 0.7, canvas.height * 0.7, 25));
+		}
+
+        function calculateMetrics() {
+            if (boids.length === 0) return;
+
+            // Average speed
+            let totalSpeed = 0;
+            for (let boid of boids) {
+                totalSpeed += boid.velocity.magnitude();
+            }
+            let avgSpeed = totalSpeed / boids.length;
+
+            // Alignment (average dot product of normalized velocities)
+            let alignment = 0;
+            let count = 0;
+            for (let i = 0; i < boids.length; i++) {
+                for (let j = i + 1; j < boids.length; j++) {
+                    let v1 = boids[i].velocity.normalize();
+                    let v2 = boids[j].velocity.normalize();
+                    alignment += v1.dot(v2);
+                    count++;
+                }
+            }
+            alignment = count > 0 ? alignment / count : 0;
+
+            // Cohesion (inverse of average distance from center of mass)
+           
+            let psi = 0;
+           
+            for (let boid of boids) {
+                psi += boid.equilibriumParameter(boids);
+            }
+            let cohesion = psi / boids.length;
+
+
+            // Average neighbors
+            let totalNeighbors = 0;
+            for (let boid of boids) {
+                let neighbors = 0;
+                for (let other of boids) {
+                    if (other !== boid && boid.position.distance(other.position) < boid.perceptionRadius) {
+                        neighbors++;
+                    }
+                }
+                totalNeighbors += neighbors;
+            }
+            let avgNeighbors = totalNeighbors / boids.length;
+
+            // Update UI
+            document.getElementById('avgSpeed').textContent = avgSpeed.toFixed(2);
+            document.getElementById('alignment').textContent = alignment.toFixed(2);
+            document.getElementById('cohesion').textContent = cohesion.toFixed(2);
+            document.getElementById('avgNeighbors').textContent = avgNeighbors.toFixed(1);
+        }
+        
+        function setPreset(type) {
+			const presets = {
+				fish: {
+					alignment: 0.02,
+					cohesion: 0.024,
+					separation: 0.03,
+					perceptionRadius: 70,
+					maxSpeed: 2.8,
+					wind: 'vortex',
+					fov: 6,
+					bodyType: "🐟"
+				},
+				birds: {
+					alignment: 0.03,
+					cohesion: 0.02,
+					separation: 0.036,
+					perceptionRadius: 80,
+					maxSpeed: 2.5,
+					wind: 'vortex',
+					fov: 5.5,
+					bodyType: "🕊️"
+				},
+				herd: {
+					alignment: 0.016,
+					cohesion: 0.024,
+					separation: 0.015,
+					perceptionRadius: 90,
+					maxSpeed: 1.8,
+					wind: 'none',
+					fov: 4.4,
+					bodyType: "🦌"
+				},
+				insects: {
+					alignment: 0.006,
+					cohesion: 0.03,
+					separation: 0.009,
+					perceptionRadius: 40,
+					maxSpeed: 2.0,
+					wind: 'none',
+					fov: 6,
+					bodyType: "🐝"
+				},
+				migrating: {
+					alignment: 0.03,
+					cohesion: 0.01,
+					separation: 0.045,
+					perceptionRadius: 100,
+					maxSpeed: 2.5,
+					wind: 'uniform',
+					fov: 4.9,
+					bodyType: "🦆"
+				}
+			};
+
+			const p = presets[type];
+			if (!p) return;
+
+			// Set forces and update sliders
+			document.getElementById('alignmentForce').value = p.alignment;
+			document.getElementById('cohesionForce').value = p.cohesion;
+			document.getElementById('separationForce').value = p.separation;
+			document.getElementById('perceptionRadius').value = p.perceptionRadius;
+			document.getElementById('fieldOfView').value = p.fov;
+			updateAlignment(p.alignment);
+			updateCohesion(p.cohesion);
+			updateSeparation(p.separation);
+			updatePerception(p.perceptionRadius);
+			updateFov(p.fov);
+
+			// Set wind type
+			setWindType(p.wind);
+
+			// Set boid-specific properties
+			for (let boid of boids) {
+				boid.perceptionRadius = p.perceptionRadius;
+				boid.bodyType = p.bodyType;
+				boid.maxSpeed = p.maxSpeed;
+				boid.perceptionFOV = p.fov;
+			}
+		}
+		
+		function setTheme(theme) {
+			const root = document.documentElement;
+			if (theme === 'midnight')  {
+				document.body.style.background = '#1e1e2f';
+				document.body.style.color = '#f0f0f0';  
+				canvas.style.background = '#101021';
+				setButtonStyle('#333', '#f0f0f0');  
+				setBoidColors('#1e1e2f', '#ff6f61');
+				document.querySelectorAll('label').forEach(label => {
+					label.style.color = '#cccccc';
+				setObstaclesColor('rgba(102, 51, 153, 1)')
+				});
+				document.querySelectorAll('.info-text').forEach(el => {
+					el.style.color = '#bbbbbb';
+				});
+				document.querySelectorAll('h3, h4').forEach(h => {
+					h.style.color = '#f5f5f5';
+				});
+				
+				} else if (theme === 'monochrome') {
+				document.body.style.background = '#f4f4f4';
+				document.body.style.color = '#222';
+				canvas.style.background = '#eaeaea';
+				setButtonStyle('#222', '#fff');
+				setBoidColors('#333333', '#ff5555');
+				setObstaclesColor('rgba(245, 255, 250, 1)')
+			} 
+		}
+
+		// Set all .button elements' background and text color
+		function setButtonStyle(bg, color) {
+			document.querySelectorAll('.button').forEach(btn => {
+				btn.style.background = bg;
+				btn.style.color = color;
+			});
+		}
+
+		// Store colors to use during draw
+		let boidColor = '#66c2ff';
+		let predatorColor = '#ff6f61';
+		let obstaclesColor = 'rgba(102, 51, 153, 1)';
+
+		function setBoidColors(boid, predator) {
+			boidColor = boid;
+			predatorColor = predator;
+		}
+
+        function animate() {
+            if (!isPaused) {
+                // Clear canvas with fade effect for trails
+                if (showTrails) {
+                    <!--ctx.fillStyle = 'rgba(15, 15, 35, 0.1)'; -- > 
+                    ctx.fillStyle = boidColor
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else {
+                    <!--ctx.fillStyle = 'rgba(15, 15, 35, 1)';-->
+                    ctx.fillStyle = boidColor
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                // Update and draw boids
+                for (let boid of boids) {
+                    boid.update(boids, predators);
+                    boid.draw(ctx, showVelocityVectors, showPerceptionRadius);
+                    boid.frame = boid.frame +1;
+                }
+
+                // Update and draw predators
+                for (let predator of predators) {
+                    predator.update(boids);
+                    predator.draw(ctx);
+                }
+                
+                // Update and draw obstacles
+                for (let obstacle of obstacles) {
+					obstacle.draw(ctx);
+				}
+
+                // Update metrics every 10 frames
+                if (Date.now() % 200 < 50) {
+                    calculateMetrics();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+		
+		// ADD CANVAS CLICK HANDLER
+		canvas.addEventListener('click', function(event) {
+			const rect = canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left;
+			const y = event.clientY - rect.top;
+			
+			// Check if clicking on existing obstacle to remove it
+			for (let i = obstacles.length - 1; i >= 0; i--) {
+				if (obstacles[i].contains(x, y)) {
+					obstacles.splice(i, 1);
+					return;
+				}
+			}
+			
+			// Add new obstacle at click position
+			obstacles.push(new Obstacle(x, y, 20 + Math.random() * 20, obstaclesColor));
+		});
+
+
+        // Initialize and start simulation
+        setTheme('midnight'); //default
+        initializeBoids(50);
+        animate();
+
+    </script>
+</body>
+</html>
