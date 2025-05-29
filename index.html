@@ -167,56 +167,56 @@
             margin-top: 5px;
         }
         
-		.obstacle-panel {
-			background: rgba(0, 0, 0, 0.3);
-			border-radius: 15px;
-			padding: 15px;
-			backdrop-filter: blur(10px);
-			box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-			margin-bottom: 20px;
-			text-align: center;
-		}
+	.obstacle-panel {
+		background: rgba(16, 16, 33, 0.3);
+		border-radius: 15px;
+		padding: 15px;
+		backdrop-filter: blur(10px);
+		box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+		margin-bottom: 20px;
+		text-align: center;
+	}
 
-		.obstacle-panel h3 {
-			margin: 0 0 15px 0;
-			color: #ffffff;
-			font-size: 1.2em;
-		}
+	.obstacle-panel h3 {
+		margin: 0 0 15px 0;
+		color: #ffffff;
+		font-size: 1.2em;
+	}
 
-		.obstacle-controls {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			gap: 15px;
-			flex-wrap: wrap;
-			margin-bottom: 15px;
-		}
+	.obstacle-controls {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 15px;
+		flex-wrap: wrap;
+		margin-bottom: 15px;
+	}
 
-		.obstacle-controls button {
-			padding: 10px 20px;
-			font-size: 0.9em;
-			white-space: nowrap;
-		}
+	.obstacle-controls button {
+		padding: 10px 20px;
+		font-size: 0.9em;
+		white-space: nowrap;
+	}
 
-		.obstacle-checkbox {
-			display: flex;
-			align-items: center;
-			color: #e0e0e0;
-			font-size: 0.9em;
-			cursor: pointer;
-		}
+	.obstacle-checkbox {
+		display: flex;
+		align-items: center;
+		color: #e0e0e0;
+		font-size: 0.9em;
+		cursor: pointer;
+	}
 
-		.obstacle-checkbox input {
-			margin-right: 8px;
-			transform: scale(1.2);
-		}
+	.obstacle-checkbox input {
+		margin-right: 8px;
+		transform: scale(1.2);
+	}
 
-		.obstacle-panel .info-text {
-			color: #cccccc;
-			font-size: 0.85em;
-			margin: 0;
-			font-style: italic;
-		}
+	.obstacle-panel .info-text {
+		color: #cccccc;
+		font-size: 0.85em;
+		margin: 0;
+		font-style: italic;
+	}
         
     </style>
 </head>
@@ -233,8 +233,8 @@
 					<h3>Obstacle Controls</h3>
 					<div class="obstacle-controls">
 						<button class="button" onclick="addObstacle()">Add Random Obstacle</button>
-						<button class="button" onclick="clearObstacles()">Clear All Obstacles</button>
 						<button class="button" onclick="addWalls()">Add Wall Pattern</button>
+						<button class="button" onclick="clearObstacles()">Clear All Obstacles</button>
 					</div>
 					<div class="info-text">💡 Click anywhere on the canvas to place an obstacle, or click existing obstacles to remove them</div>
 				</div>
