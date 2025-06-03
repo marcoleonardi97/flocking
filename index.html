@@ -35,9 +35,11 @@
         }
 
         .canvas-container {
+            align-self: start;
+
             background: rgba(0, 0, 0, 0.3);
             border-radius: 15px;
-            padding: 20px;
+            padding: 10px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
@@ -127,7 +129,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 80px;
         }
 
         .metric-card {
@@ -173,7 +175,7 @@
 		padding: 15px;
 		backdrop-filter: blur(10px);
 		box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-		margin-bottom: 20px;
+		margin-bottom: 5px;
 		text-align: center;
 	}
 
@@ -219,10 +221,13 @@
 	}
         
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
     <div class="container">
-        <h1>Simulating Active Matter:</h1>
+        <h1>Simulating Active Matter</h1>
         <h2> A flocking simulation by Marco Leonardi and Rudi Van Velzen</h2> 
         
 			<div class="simulation-container">
@@ -233,11 +238,39 @@
 					<h3>Obstacle Controls</h3>
 					<div class="obstacle-controls">
 						<button class="button" onclick="addObstacle()">Add Random Obstacle</button>
-						<button class="button" onclick="addWalls()">Add Wall Pattern</button>
 						<button class="button" onclick="clearObstacles()">Clear All Obstacles</button>
 					</div>
 					<div class="info-text">💡 Click anywhere on the canvas to place an obstacle, or click existing obstacles to remove them</div>
 				</div>
+
+                <div style="margin-top: 40px;">
+                    <h3 style="color: white; text-align: center;">Directional Entropy</h3>
+                    <canvas id="entropyChart" width="800" height="200"></canvas>
+                </div>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>Average Speed</h4>
+                        <div class="metric-value" id="avgSpeed">0.00</div>
+                        <div class="info-text">Current flock velocity</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Alignment</h4>
+                        <div class="metric-value" id="alignment">0.00</div>
+                        <div class="info-text">Direction coherence</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Cohesion</h4>
+                        <div class="metric-value" id="cohesion">0.00</div>
+                        <div class="info-text">Group compactness</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Neighbors</h4>
+                        <div class="metric-value" id="avgNeighbors">0.00</div>
+                        <div class="info-text">Average nearby boids</div>
+                    </div>
+                </div>
+
 			</div>
             
             <div class="controls">
@@ -332,28 +365,9 @@
             </div>
         </div>
 
-        <div class="metrics">
-            <div class="metric-card">
-                <h4>Average Speed</h4>
-                <div class="metric-value" id="avgSpeed">0.00</div>
-                <div class="info-text">Current flock velocity</div>
-            </div>
-            <div class="metric-card">
-                <h4>Alignment</h4>
-                <div class="metric-value" id="alignment">0.00</div>
-                <div class="info-text">Direction coherence</div>
-            </div>
-            <div class="metric-card">
-                <h4>Cohesion</h4>
-                <div class="metric-value" id="cohesion">0.00</div>
-                <div class="info-text">Group compactness</div>
-            </div>
-            <div class="metric-card">
-                <h4>Neighbors</h4>
-                <div class="metric-value" id="avgNeighbors">0.00</div>
-                <div class="info-text">Average nearby boids</div>
-            </div>
-        </div>
+
+
+
 	
     </div>
 
@@ -1054,19 +1068,6 @@
 			}
 		}
 
-		function addWalls() {
-			clearObstacles();
-			// Add border walls
-			const wallThickness = 15;
-			obstacles.push(new Obstacle(wallThickness, canvas.height / 2, wallThickness)); // Left wall
-			obstacles.push(new Obstacle(canvas.width - wallThickness, canvas.height / 2, wallThickness)); // Right wall
-			obstacles.push(new Obstacle(canvas.width / 2, wallThickness, wallThickness)); // Top wall
-			obstacles.push(new Obstacle(canvas.width / 2, canvas.height - wallThickness, wallThickness)); // Bottom wall
-			
-			// Add some center obstacles
-			obstacles.push(new Obstacle(canvas.width * 0.3, canvas.height * 0.3, 25));
-			obstacles.push(new Obstacle(canvas.width * 0.7, canvas.height * 0.7, 25));
-		}
 
         function calculateMetrics() {
             if (boids.length === 0) return;
@@ -1249,6 +1250,57 @@
 			predatorColor = predator;
 		}
 
+        // === Set up Entropy Chart ===
+const entropyCtx = document.getElementById('entropyChart').getContext('2d');
+const entropyChart = new Chart(entropyCtx, {
+    type: 'line',
+    
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Entropy',
+            data: [],
+            borderColor: '#4fc3f7',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: false,
+        animation: false,
+        scales: {
+            x: { title: { display: true, text: 'Time Step' }},
+            y: { title: { display: true, text: 'Entropy' }, min: 0, max: 1 } // max depends on bin count
+        }
+    }
+});
+
+        let entropyTimestep = 0;
+        let entropyFrameCounter = 0;
+
+        function computeDirectionalEntropy(boids, binCount = 40) {
+            const histogram = new Array(binCount).fill(0);
+            for (let b of boids) {
+                const angle = Math.atan2(b.velocity.y, b.velocity.x);
+
+                const rawIndex = ((angle + Math.PI) / (2 * Math.PI)) * binCount;
+                const index = Math.min(Math.round(rawIndex), binCount - 1);
+
+                histogram[index]++;
+            }
+            const total = boids.length;
+            const probs = histogram.map(count => count / total);
+
+            let entropy = 0;
+            for (let p of probs) {
+                if (p > 0) entropy -= p * Math.log2(p);
+            }
+            return entropy / Math.log2(binCount) ;
+
+        }
+
+
         function animate() {
             if (!isPaused) {
                 // Clear canvas with fade effect for trails
@@ -1284,6 +1336,20 @@
                 if (Date.now() % 200 < 50) {
                     calculateMetrics();
                 }
+
+                entropyFrameCounter++;
+                if (entropyFrameCounter % 10 === 0) {
+                    const entropy = computeDirectionalEntropy(boids);
+                    entropyChart.data.labels.push(entropyTimestep++);
+                    entropyChart.data.datasets[0].data.push(entropy);
+                    if (entropyChart.data.labels.length > 200) {
+                        entropyChart.data.labels.shift();
+                        entropyChart.data.datasets[0].data.shift();
+                    }
+                    entropyChart.update();
+                }
+
+
             }
 
             requestAnimationFrame(animate);
