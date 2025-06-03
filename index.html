@@ -260,9 +260,9 @@
                         <div class="info-text">Direction coherence</div>
                     </div>
                     <div class="metric-card">
-                        <h4>Cohesion</h4>
+                        <h4>Local Equilibrium</h4>
                         <div class="metric-value" id="cohesion">0.00</div>
-                        <div class="info-text">Group compactness</div>
+                        <div class="info-text">Average ψ</div>
                     </div>
                     <div class="metric-card">
                         <h4>Neighbors</h4>
@@ -1092,15 +1092,13 @@
             }
             alignment = count > 0 ? alignment / count : 0;
 
-            // Cohesion (inverse of average distance from center of mass)
+            // This variable is called cohesion but its the old naming. I don't want to rename it everywhere, but it's actually the average Psi
            
             let psi = 0;
-           
             for (let boid of boids) {
                 psi += boid.equilibriumParameter(boids);
             }
             let cohesion = psi / boids.length;
-
 
             // Average neighbors
             let totalNeighbors = 0;
