@@ -1,1 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Main page -->
+  <url>
+    <loc>https://marcoleonardi97.github.io/flocking/</loc>
+    <lastmod>2025-09-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Example: if you have subpages, add them like this -->
+  <!--
+  <url>
+    <loc>https://marcoleonardi97.github.io/flocking/about.html</loc>
+    <lastmod>2025-09-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  -->
+
+</urlset>
 
