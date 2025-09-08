@@ -1,5 +1,5 @@
 # Flocking
-Interactive simulation of active matter and animal behaviour 
+This repository contains a Python implementation of boid flocking behavior. It models swarm intelligence, predator–prey dynamics, and emergent collective motion using simple rules.
 
 [Run the simulation](https://marcoleonardi97.github.io/flocking)
 
