@@ -5,7 +5,7 @@ An interactive simulation of boid flocking behavior modeling swarm intelligence,
 
 ![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Dependencies](https://img.shields.io/badge/dependencies-lightkurve%2C%20tkinter%2C%20matplotlib-orange.svg)
+![Dependencies](https://img.shields.io/badge/dependencies-numpy%2C%20matplotlib-orange.svg)
 
 ## Features
 
