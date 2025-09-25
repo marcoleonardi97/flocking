@@ -3,6 +3,10 @@
 An interactive simulation of boid flocking behavior modeling swarm intelligence, predator-prey dynamics, and emergent collective motion using simple rules. This project implements both Python analysis tools and a web-based interactive simulation.
 [Run the simulation](https://marcoleonardi97.github.io/flocking)
 
+![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Dependencies](https://img.shields.io/badge/dependencies-lightkurve%2C%20tkinter%2C%20matplotlib-orange.svg)
+
 ## Features
 
 ### Interactive Web Simulation
