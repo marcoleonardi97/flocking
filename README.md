@@ -184,12 +184,8 @@ Contributions welcome! Areas for development:
 
 ## Authors
 
-- **Marco Leonardi** - Core simulation development
-- **Rudi Van Velzen** - Web interface and interactive features
-
-## License
-
-[Add your chosen license here]
+- **Marco Leonardi** - Leiden University
+- **Rudi Van Velzen** - Leiden University
 
 ## References
 
